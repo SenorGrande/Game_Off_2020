@@ -1,0 +1,22 @@
+{
+  "name": "game_off_2020",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SenorGrande/Game_Off_2020.git"
+  },
+  "author": "SenorGrande",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SenorGrande/Game_Off_2020/issues"
+  },
+  "homepage": "https://github.com/SenorGrande/Game_Off_2020#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
