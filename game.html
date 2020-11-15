@@ -21,7 +21,7 @@
         physics: {
             default: 'arcade',
             arcade: {
-                gravity: { y: 0 },
+                gravity: { y: 300 },
                 debug: false
             }
         },
@@ -35,6 +35,19 @@
     var player;
     var moon;
     var station_walls;
+    var asteroids;
+    var asteroid_catcher;
+
+    var cursors;
+    var aKey;
+    var dKey;
+    var health = 5;
+    var gameOver = false;
+    var score = 0;
+    var scoreText;
+
+    // TODO : add interactable buttons - if the player is touching AND button is pressed, move asteroid collector
+    // Maybe just key input for now
 
     var game = new Phaser.Game(config);
 
@@ -49,7 +62,9 @@
         this.load.image('station', 'assets/station.png');
         this.load.image('station_hwall', 'assets/wall-horizontal.png');
         this.load.image('station_vwall', 'assets/wall-vertical.png');
-        this.load.image('moon', 'assets/moon.png')
+        this.load.image('moon', 'assets/moon.png');
+        this.load.image('asteroid', 'assets/asteroid.png');
+        this.load.image('asteroid_catcher', 'assets/asteroid_catcher.png');
 
     }
     
@@ -68,7 +83,11 @@
         station_walls.create(620, 400, 'station_vwall');
 
         player = this.physics.add.sprite(400, 450, 'spaceman');
+        player.body.setAllowGravity(false);
         player.setCollideWorldBounds(true);
+
+        asteroid_catcher = this.physics.add.sprite(200, 200, 'asteroid_catcher');
+        asteroid_catcher.body.setAllowGravity(false);
     
         //  Our player animations, turning, walking left and walking right.
         this.anims.create({
@@ -93,39 +112,79 @@
 
         //  Input Events
         cursors = this.input.keyboard.createCursorKeys();
+        aKey = this.input.keyboard.addKey('A');
+        dKey = this.input.keyboard.addKey('D');
+
+        // TODO : Add random values!
+        asteroids = this.physics.add.group({
+            key: 'asteroid',
+            repeat: 10,
+            setXY: { x: 200, y: -100, stepX: 70, stepY: -100 }
+        });
 
         this.physics.add.collider(player, station_walls);
+
+        // TODO : collide with station OR asteroid catcher
+        this.physics.add.collider(station_walls, asteroids, hitAsteroid, null, this);
+
+        // TODO : asteroid catcher needs to collide with station walls - extend vertical walls
+        this.physics.add.overlap(asteroid_catcher, asteroids, catchAsteroid, null, this);
+
     }
 
     function update ()
     {
-        if (cursors.left.isDown)
-        {
+        // if (gameOver) {
+        //     return;
+        // }
+
+        if (cursors.left.isDown) {
             player.setVelocityX(-160);
             player.anims.play('left', true);
-        }
-        else if (cursors.right.isDown)
-        {
+        } else if (cursors.right.isDown) {
             player.setVelocityX(160);
             player.anims.play('right', true);
-        }
-        else
-        {
+        } else {
             player.setVelocityX(0);
             player.anims.play('turn');
         }
 
-        if (cursors.up.isDown)
-        {
+        if (cursors.up.isDown) {
             player.setVelocityY(-160);
-        }
-        else if (cursors.down.isDown)
-        {
+        } else if (cursors.down.isDown) {
             player.setVelocityY(160);
-        }
-        else {
+        } else {
             player.setVelocityY(0);
         }
+
+        // Asteroid catcher movement
+        if (aKey.isDown) {
+            asteroid_catcher.setVelocityX(-100);
+        } else if (dKey.isDown) {
+            asteroid_catcher.setVelocityX(100);
+        } else {
+            asteroid_catcher.setVelocityX(0); // Might be harder to play without this
+        }
+    }
+
+    function hitAsteroid (station_walls, asteroid) {
+        // Need to take damage
+        asteroid.disableBody(true, true);
+
+        // If no health left
+        station_walls.setTint(0xff0000); // ! This currently doesn't work
+
+        health -= 1;
+        
+        if (health < 0) {
+            gameOver = true;
+        }
+    }
+
+    function catchAsteroid (asteroid_catcher, asteroid) {
+        asteroid.disableBody(true, true);
+
+        // TODO : process asteroid
     }
 
 </script>
