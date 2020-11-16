@@ -21,7 +21,7 @@
         physics: {
             default: 'arcade',
             arcade: {
-                gravity: { y: 300 },
+                gravity: { y: 100 },
                 debug: false
             }
         },
@@ -66,6 +66,9 @@
         this.load.image('asteroid', 'assets/asteroid.png');
         this.load.image('asteroid_catcher', 'assets/asteroid_catcher.png');
 
+        // Temp
+        this.load.image('block', 'assets/block.png');
+
     }
     
     function create ()
@@ -88,7 +91,14 @@
 
         asteroid_catcher = this.physics.add.sprite(200, 200, 'asteroid_catcher');
         asteroid_catcher.body.setAllowGravity(false);
-    
+
+        // asteroid_machine = this.physics.add.staticGroup();
+        // ice_machine = this.physics.add.staticGroup();
+        // res_machine = this.physics.add.staticGroup();
+        this.add.image(580, 260, 'block'); // Asteroid
+        this.add.image(520, 260, 'block'); // Ice
+        this.add.image(580, 320, 'block'); // Resources
+
         //  Our player animations, turning, walking left and walking right.
         this.anims.create({
             key: 'left',
@@ -119,7 +129,7 @@
         asteroids = this.physics.add.group({
             key: 'asteroid',
             repeat: 10,
-            setXY: { x: 200, y: -100, stepX: 70, stepY: -100 }
+            setXY: { x: 200, y: -100, stepX: 70, stepY: -1000 }
         });
 
         this.physics.add.collider(player, station_walls);
@@ -178,6 +188,7 @@
         
         if (health < 0) {
             gameOver = true;
+            console.log('You Lose!');
         }
     }
 
@@ -185,6 +196,14 @@
         asteroid.disableBody(true, true);
 
         // TODO : process asteroid
+        // change asteroid position - might actually just create an asteroid image?
+        console.log(asteroid);
+        // asteroid.body.center(580, 260);
+        // asteroid.x = 580;
+        // asteroid.y = 260;
+        this.add.image(580, 260, 'asteroid');
+
+        // Need to time processing this...
     }
 
 </script>
