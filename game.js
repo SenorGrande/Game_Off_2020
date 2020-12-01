@@ -25,6 +25,15 @@ var asteroid_catcher;
 
 var ice_cubes = [];
 
+var asteroid_mach;
+var ice_mach;
+var is_holding_ice = false; // flag for if player is holding ice
+var drop_mach;
+
+var ship;
+var isLaunchShip = false;
+var isShipDocked = false;
+
 var cursors;
 var aKey;
 var dKey;
@@ -34,9 +43,7 @@ var score = 0;
 var scoreText;
 
 var timer = [];
-
-// TODO : add interactable buttons - if the player is touching AND button is pressed, move asteroid collector
-// Maybe just key input for now
+var isShipTimerEnabled = false;
 
 var game = new Phaser.Game(config);
 
@@ -54,19 +61,13 @@ function preload ()
     this.load.image('moon', 'assets/moon.png');
     this.load.image('asteroid', 'assets/asteroid.png');
     this.load.image('asteroid_catcher', 'assets/asteroid_catcher.png');
-
     this.load.image('ice', 'assets/ice.png');
-
-    // Temp
     this.load.image('block', 'assets/block.png');
-
+    this.load.image('ship', 'assets/ship.png');
 }
 
 function create ()
 {
-    // timer = this.time.create(false);
-    // timer.loop(2000, processAsteroid, this);
-
     this.add.image(400, 300, 'space');
     this.add.image(400, 400, 'station');
 
@@ -86,12 +87,12 @@ function create ()
     asteroid_catcher = this.physics.add.sprite(200, 200, 'asteroid_catcher');
     asteroid_catcher.body.setAllowGravity(false);
 
-    // asteroid_machine = this.physics.add.staticGroup();
-    // ice_machine = this.physics.add.staticGroup();
-    // res_machine = this.physics.add.staticGroup();
-    this.add.image(580, 260, 'block'); // Asteroid
-    this.add.image(520, 260, 'block'); // Ice
-    this.add.image(580, 320, 'block'); // Resources
+    asteroid_mach = this.physics.add.staticGroup().create(580, 260, 'block');
+    ice_mach = this.physics.add.staticGroup().create(520, 260, 'block');
+    drop_mach = this.physics.add.staticGroup().create(220, 420, 'block');
+
+    ship = this.physics.add.sprite(150, 1000, 'ship');
+    ship.body.setAllowGravity(false);
 
     //  Our player animations, turning, walking left and walking right.
     this.anims.create({
@@ -127,13 +128,14 @@ function create ()
     });
 
     this.physics.add.collider(player, station_walls);
+    this.physics.add.collider(player, asteroid_mach);
+    this.physics.add.collider(player, ice_mach, pickupIce, null, this);
+    this.physics.add.collider(player, drop_mach, putdownIce, null, this);
 
-    // TODO : collide with station OR asteroid catcher
     this.physics.add.collider(station_walls, asteroids, hitAsteroid, null, this);
-
-    // TODO : asteroid catcher needs to collide with station walls - extend vertical walls
     this.physics.add.overlap(asteroid_catcher, asteroids, catchAsteroid, null, this);
 
+    scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#fff'});
 }
 
 function update ()
@@ -169,15 +171,38 @@ function update ()
     } else {
         asteroid_catcher.setVelocityX(0); // Might be harder to play without this
     }
+
+    if (ship.y < 100) {
+        console.log(isLaunchShip);
+        isLaunchShip = false;
+        ship.destroy();
+        ship = this.physics.add.sprite(150, 1000, 'ship');
+        ship.body.setAllowGravity(false);
+        isShipDocked = false;
+    } else if (ship.y > 450 || isLaunchShip) {
+        ship.setVelocityY(-100);
+        isShipDocked = false;
+    } else if (!isShipTimerEnabled) {
+        isShipDocked = true;
+        ship.setVelocityY(0);
+        isShipTimerEnabled = true;
+        ship_timer = this.time.addEvent({ delay: 5000, callback: launchShip, callbackScope: this, loop: false });
+    }
+
+}
+
+function launchShip () {
+    isLaunchShip = true;
+    isShipTimerEnabled = false;
 }
 
 function hitAsteroid (station_walls, asteroid) {
-    // Need to take damage
     asteroid.disableBody(true, true);
 
-    // If no health left
+    // TODO : If no health left
     station_walls.setTint(0xff0000); // ! This currently doesn't work
 
+    // TODO : might remove
     health -= 1;
     
     if (health < 0) {
@@ -214,7 +239,32 @@ function processAsteroid () {
     asteroid_to_destroy.destroy(); // TODO : having an off by one error I think, last to destroy doesn't seem to exist
 
     // create water
-    ice_cubes.push(this.add.image(540, 260, 'ice'));
+    ice_cubes.push(this.add.image(520, 260, 'ice'));
+}
 
-    // reset timer
+function pickupIce () {
+    if (cursors.space.isDown && !is_holding_ice) {
+        console.log('pickup ice');
+        ice_cube = ice_cubes.shift();
+        ice_cube.destroy();
+        is_holding_ice = true;
+    }
+}
+
+function putdownIce () {
+    if (cursors.space.isDown && is_holding_ice && isShipDocked) {
+        is_holding_ice = false;
+
+        ice_cubes.push(this.add.image(220, 420, 'ice'));
+
+        // TODO : timer for a second
+        ice_cube = ice_cubes.pop();
+        ice_cube.destroy();
+
+        // TODO : Launch ship?
+
+        score++;
+        scoreText.setText('Score: ' + score);
+        
+    }
 }
